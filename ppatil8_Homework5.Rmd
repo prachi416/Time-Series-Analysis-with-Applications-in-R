@@ -1,0 +1,615 @@
+---
+title: "ppatil8_Homework5"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-04-24"
+---
+# Chapter 9
+```{r}
+library(TSA)
+data(color)
+m1.color=arima(color,order=c(1,0,0))
+m1.color
+```
+#Forecasts and Limits for the Temperature Cosine Trend
+```{r}
+data(tempdub)
+tempdub1=ts(c(tempdub,rep(NA,24)),start=start(tempdub), 
+            freq=frequency(tempdub))
+har.=harmonic(tempdub,1)
+m5.tempdub=arima(tempdub,order=c(0,0,0),xreg=har.)
+newhar.=harmonic(ts(rep(1,24), start=c(1976,1),freq=12),1)
+win.graph(width=4.875, height=2.5,pointsize=8)
+plot(m5.tempdub,n.ahead=24,n1=c(1972,1),newxreg=newhar., 
+     type='b',ylab='Temperature',xlab='Year')
+
+```
+#Forecasts and Forecast Limits for the AR(1) Model for Color
+```{r}
+data(color)
+m1.color=arima(color,order=c(1,0,0))
+plot(m1.color,n.ahead=12,type='b',xlab='Time',
+     ylab='Color Property')
+abline(h=coef(m1.color)[names(coef(m1.color))=='intercept'])
+```
+#Forecasts from an AR(3) Model for Sqrt(Hare)
+```{r}
+data(hare)
+m1.hare=arima(sqrt(hare),order=c(3,0,0))
+plot(m1.hare, n.ahead=25,type='b', 
+     xlab='Year',ylab='Sqrt(hare)')
+abline(h=coef(m1.hare)[names(coef(m1.hare))=='intercept'])
+```
+
+# Chapter 10
+
+#Monthly Carbon Dioxide Levels at Alert, NWT, Canada
+```{r}
+data(co2)
+plot(co2,ylab='CO2')
+```
+#Carbon Dioxide Levels with Monthly Symbols
+```{r}
+plot(window(co2,start=c(2000,1)),ylab='CO2')
+Month=c('J','F','M','A','M','J','J','A','S','O','N','D')
+points(window(co2,start=c(2000,1)),pch=Month)
+```
+#Sample ACF of CO2 Levels
+```{r}
+acf(as.vector(co2),lag.max=36)
+```
+#Time Series Plot of the First Differences of CO2 Levels
+```{r}
+plot(diff(co2),ylab='First Difference of CO2',xlab='Time')
+```
+# Sample ACF of First Differences of CO2 Levels
+```{r}
+acf(as.vector(diff(co2)),lag.max=36)
+```
+#Time Series Plot of First and Seasonal Differences of CO2
+```{r}
+plot(diff(diff(co2),lag=12),xlab='Time', 
+     ylab='First and Seasonal Difference of CO2')
+```
+#Sample ACF of First and Seasonal Differences of CO2
+```{r}
+acf(as.vector(diff(diff(co2),lag=12)),lag.max=36,ci.type='ma')
+```
+#Parameter Estimates for the CO2 Model
+```{r}
+m1.co2=arima(co2,order=c(0,1,1),seasonal=list(order=c(0,1,1), period=12))
+m1.co2
+```
+#Residuals from the ARIMA(0,1,1)×(0,1,1)12 Model
+```{r}
+plot(window(rstandard(m1.co2),start=c(1995,2)), 
+     ylab='Standardized Residuals',type='o')
+abline(h=0)
+```
+#ACF of Residuals from the ARIMA(0,1,1)×(0,1,1)12 Model
+```{r}
+acf(as.vector(window(rstandard(m1.co2),start=c(1995,2))), 
+    lag.max=36)
+```
+#Residuals from the ARIMA(0,1,1)×(0,1,1)12 Model
+```{r}
+hist(window(rstandard(m1.co2),start=c(1995,2)), 
+     xlab='Standardized Residuals')
+```
+#Residuals: ARIMA(0,1,1)×(0,1,1)12 Model
+```{r}
+qqnorm(window(rstandard(m1.co2),start=c(1995,2)))
+qqline(window(rstandard(m1.co2),start=c(1995,2)))
+```
+#ARIMA(0,1,2)×(0,1,1)12 Overfitted Model
+```{r}
+m2.co2=arima(co2,order=c(0,1,2),seasonal=list(order=c(0,1,1), period=12))
+m2.co2
+```
+#Forecasts and Forecast Limits for the CO2 Model
+```{r}
+plot(m1.co2,n1=c(2003,1),n.ahead=24,xlab='Year',type='o', 
+     ylab='CO2 Levels')
+```
+#Long-Term Forecasts for the CO2 Model
+```{r}
+plot(m1.co2,n1=c(2004,1),n.ahead=48,xlab='Year',type='b', 
+     ylab='CO2 Levels')
+```
+##### Exercise ##### 
+
+## Chapter 9
+
+#9.4a
+```{r}
+mu_t <- function(t) {
+  46.2660 + (-26.7079) * cos(2 * pi * t) + (-2.1697) * sin(2 * pi * t)
+}
+
+farenheit_to_celsius <- function(t_f) {
+  (t_f - 32) * 5 / 9
+}
+temperature_to_string <- function(t_f) {
+  paste(c(round(t_f, 1), '°F or ', round(farenheit_to_celsius(t_f), 1), '°C'), collapse='')
+}
+
+t = 12 + 4/12
+estimate = mu_t(t)
+print(temperature_to_string(estimate))
+```
+#9.4b
+```{r}
+z = qnorm(0.975)
+se = 3.719
+estimate = mu_t(t)
+lower_estimate = estimate - z * se
+upper_estimate = estimate + z * se
+
+print(c('Lower estimate: ', temperature_to_string(lower_estimate)), quote=F)
+print(c('Upper estimate: ', temperature_to_string(upper_estimate)), quote=F)
+```
+#9.9a
+```{r}
+set.seed(2000)
+Y = arima.sim(model=list(ar=0.8), n=48) + 100
+model = arima(Y[1:40], order=c(1, 0, 0), method='ML')
+print(model)
+```
+#9.9b
+```{r}
+library(ggplot2)
+pred <- predict(model, n.ahead = 8, se.fit = TRUE)
+Y_pred <- pred$pred
+se <- pred$se
+z <- qnorm(0.975)
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.9c
+
+#Most of the values are within the 95% confidence interval
+
+#9.9d
+```{r}
+
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.9e
+```{r}
+set.seed(3000)
+Y = arima.sim(model=list(ar=0.8), n=48) + 100
+model = arima(Y[1:40], order=c(1, 0, 0), method='ML')
+print(model)
+
+pred = predict(model, n.ahead=8, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+se
+z = qnorm(0.975)
+
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#Results are again within the 95% confidence interval
+
+#9.12a
+```{r}
+set.seed(2000)
+Y = arima.sim(model=list(ma=c(-1, 0.6)), n=36) + 100
+model = arima(Y[1:32], order=c(0, 0, 2), method='ML')
+print(model)
+```
+#9.12b
+```{r}
+pred = predict(model, n.ahead=4, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+se
+z = qnorm(0.975)
+options(repr.plot.width=12, repr.plot.height=4)
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.12c
+
+#The values are within the confidence interval
+
+#9.12d
+
+#The forecasted values beyond the second lag correspond to the process mean. This implies that as we project further into the future beyond the second lag, the predicted values stabilize around the mean of the process.
+
+#9.12e
+```{r}
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.12f
+```{r}
+set.seed(2001)
+Y = arima.sim(model=list(ma=c(-1, 0.6)), n=36) + 100
+
+model = arima(Y[1:32], order=c(0, 0, 2), method='ML')
+print(model)
+
+pred = predict(model, n.ahead=4, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#A few of the values seem like outliers -- and disagree with the remainder of the process.
+
+#9.13a
+```{r}
+set.seed(2000)
+Y = arima.sim(model=list(ar=c(0.7), ma=c(0.5)), n=50) + 100
+model = arima(Y[1:40], order=c(1, 0, 1), method='ML')
+print(model)
+```
+#9.13b
+```{r}
+pred = predict(model, n.ahead=10, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.13c
+
+#The actual values all fall within the confidence interval
+
+#9.13d
+```{r}
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.13e
+```{r}
+set.seed(2001)
+Y = arima.sim(model=list(are=c(0.7), ma=c(0.5)), n=50) + 100
+
+model = arima(Y[1:40], order=c(1, 0, 1), method='ML')
+print(model)
+
+pred = predict(model, n.ahead=10, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#All of the actual values fall within the confidence interval for the prediction.
+
+#9.16a
+```{r}
+set.seed(2000)
+Y = arima.sim(model=list(ma=c(-1, 0.75), order=c(0, 2, 2)), n=45)[-2:-1]
+model = arima(Y[1:40], order=c(0, 2, 2), method='ML')
+print(model)
+```
+#9.16b
+```{r}
+pred = predict(model, n.ahead=5, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs + 2
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#9.16c
+
+#The forecast anticipates a declining trend, whereas the actual values resume an upward trajectory. Despite this discrepancy, the actual values remain within the confidence interval of the forecast.
+
+#9.16d
+```{r}
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#The actual values are still within the confidence interval of the forecast.
+
+#9.16e
+```{r}
+set.seed(2020)
+Y = arima.sim(model=list(ma=c(-1, 0.75), order=c(0, 2, 2)), n=45)[-2:-1]
+
+model = arima(Y[1:40], order=c(0, 2, 2), method='ML')
+print(model)
+
+pred = predict(model, n.ahead=5, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = model$nobs + 2
+n = length(Y)
+ggplot() + 
+  geom_line(aes(x=1:n, y=mean(Y)), linetype='dashed') +
+  geom_line(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=c(Y)), color='blue') +
+  geom_line(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_point(aes(x=(m+1):n, y=Y_pred), color='orange') +
+  geom_ribbon(aes(
+    x=(m+1):n, 
+    ymin=Y_pred - z * se, 
+    ymax=Y_pred + z * se
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#The actual values are still within confidence interval.
+
+# Chapter 10
+
+#10.8a
+```{r}
+require(zoo)
+data(co2)
+data <- CO2
+time_sequence <- zooreg(1:nrow(data), as.yearmon("1994-01"), freq = 12)
+data$date <- time(time_sequence)
+data$year <- as.numeric(format(data$date, "%Y"))
+data$month <- as.factor(format(data$date, "%m"))
+data$t <- data$year + as.numeric(data$month)/12
+co2 <- co2[1:length(data$t)]
+model <- lm(co2 ~ t + month, data = data)
+summary(model)
+```
+#Yes, all coefficients, except the ones for February and June, are statistically significant at p = 0.05
+
+#10.8b
+```{r}
+round(summary(model)$r.squared, 4)
+```
+#10.8c
+```{r}
+options(repr.plot.width=12, repr.plot.height=4)
+acf(model$resid, plot=T)
+```
+#The autocorrelation was not captured by this model -- plenty of values are still statistically significant.
+
+#10.9a
+```{r}
+data("airpass")
+Y <- airpass
+options(repr.plot.width=12, repr.plot.height=4)
+
+n = length(Y)
+
+ggplot() + 
+  geom_line(aes(x=1:n, y=Y), color='blue') +
+  geom_point(aes(x=1:n, y=Y), color='blue') +
+  xlab('') + ylab('Y') +
+  theme_bw() + theme(text = element_text(size=16))
+
+ggplot() + 
+  geom_line(aes(x=1:n, y=log(Y)), color='blue') +
+  geom_point(aes(x=1:n, y=log(Y)), color='blue') +
+  xlab('') + ylab('Log Y') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#Taking the logs makes the changes within each seasonal cycle have closer sizes, suggesting it will be an appropriate transformation.
+
+#10.9b
+```{r}
+
+Z = diff(log(Y))
+require(latex2exp)
+ggplot() + 
+  geom_line(aes(x=1:(n-1), y=Z), color='blue') +
+  geom_point(aes(x=1:(n-1), y=Z), color='blue') +
+  xlab('') + ylab('del logY') +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#The apparently linear growth trend has been removed from the series.
+
+#10.9c
+```{r}
+
+W = diff(Z, lag=12)
+
+ggplot() + 
+  geom_line(aes(x=1:length(W), y=W), color='blue') +
+  geom_point(aes(x=1:length(W), y=W), color='blue') +
+  xlab('') + ylab(TeX('del12 del logY')) +
+  theme_bw() + theme(text = element_text(size=16))
+```
+#Seasonality is less obvious now.
+
+#10.9d
+```{r}
+options(repr.plot.width=12, repr.plot.height=4)
+acf(W, plot=T)
+```
+#The autocorrelation at lag 10 suggests we should investigate a seasonal ARIMA with season 10.
+
+#10.9e
+```{r}
+model = arima(log(Y), order=c(0,1,1), seasonal=list(order=c(0,1,1), period=12))
+model
+```
+#10.9f
+```{r}
+options(repr.plot.width=12, repr.plot.height=12)
+tsdiag(model)
+```
+#10.9g
+```{r}
+pred = predict(model, n.ahead=24, se.fit=TRUE)
+Y_pred = pred$pred
+se = pred$se
+z = qnorm(0.975)
+
+options(repr.plot.width=12, repr.plot.height=4)
+
+m = length(Y_pred)
+n = length(Y)
+plot_data = c(log(tail(Y, n=1)), Y_pred)
+
+ggplot() + 
+  geom_line(aes(x=n:(n+m), y=exp(plot_data)), color='orange') +
+  geom_point(aes(x=n:(n+m), y=exp(plot_data)), color='orange') +
+  geom_line(aes(x=1:n, y=Y), color='blue') +
+  geom_point(aes(x=1:n, y=Y), color='blue') +
+  geom_ribbon(aes(
+    x=(n+1):(n+m), 
+    ymin=exp(Y_pred - z * se), 
+    ymax=exp(Y_pred + z * se)
+  ), fill='orange', alpha=0.2) + 
+  xlab('') + ylab('') +
+  theme_bw() + theme(text = element_text(size=16))
+```
